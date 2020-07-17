@@ -19,6 +19,14 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
         
+        let defaults = UserDefaults.standard
+
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            if let decodedPeople = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(savedPeople) as? [Person] {
+                people = decodedPeople
+            }
+        }
+        
     }
     
     @objc func addNewPerson() {
@@ -75,6 +83,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
             person.name = newName
 
             self?.collectionView.reloadData()
+            self?.save()
         })
         
         let ac = UIAlertController(title: "Rename the person or delete?", message: nil, preferredStyle: .actionSheet)
@@ -88,6 +97,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
                 self?.people.remove(at: indexPath.item)
             })
             self?.collectionView.reloadData()
+            self?.save()
         })
 
         present(ac, animated: true)
@@ -114,6 +124,13 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0]
+    }
+    
+    func save() {
+        if let savedData = try? NSKeyedArchiver.archivedData(withRootObject: people, requiringSecureCoding: false) {
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey: "people")
+        }
     }
 
 
